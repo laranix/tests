@@ -7,6 +7,9 @@ matrix:
 
 sudo: false
 
+addons:
+  mariadb: '10.2'
+
 services:
   - mysql
 
