@@ -16,7 +16,7 @@ install:
 
 before_script:
   - phpenv config-rm xdebug.ini
-  - mysql -e 'create database homestead;'
+  - mysql -e 'create database travis_test;'
 
 script:
   - vendor/bin/phpunit
