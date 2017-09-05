@@ -19,12 +19,11 @@ before_install:
   - mysql -e 'CREATE DATABASE travis_test; set global max_connections = 1001;'
 
 install:
-  - cd laranix/
+  - cd $TRAVIS_BUILD_DIR/laranix
   - travis_retry composer update --prefer-dist --no-interaction --prefer-stable --no-suggest
 
 before_script:
   - phpenv config-rm xdebug.ini
+  - cd $TRAVIS_BUILD_DIR/laranix
 
-script:
-  - cd laranix
-  - vendor/bin/phpunit
+script: vendor/bin/phpunit
