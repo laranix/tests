@@ -15,7 +15,7 @@ services:
 
 before_install:
   - travis_retry composer self-update
-  - cp laranix/.env.travis laranix/.env
+  - cp .env.travis .env
   - mysql -e 'CREATE DATABASE travis_test; set global max_connections = 1001;'
 
 install:
@@ -24,6 +24,5 @@ install:
 
 before_script:
   - phpenv config-rm xdebug.ini
-  - cd $TRAVIS_BUILD_DIR/laranix
 
 script: vendor/bin/phpunit
