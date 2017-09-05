@@ -19,7 +19,6 @@ before_install:
   - mysql -e 'CREATE DATABASE travis_test; set global max_connections = 1001;'
 
 install:
-  - cd $TRAVIS_BUILD_DIR/laranix
   - travis_retry composer update --prefer-dist --no-interaction --prefer-stable --no-suggest
   - php artisan key:generate
 
