@@ -15,14 +15,15 @@ services:
 
 before_install:
   - travis_retry composer self-update
-  - cp .env.travis .env
+  - cp laranix/.env.travis laranix/.env
   - mysql -e 'CREATE DATABASE travis_test; set global max_connections = 1001;'
 
 install:
+  - cd laranix/
   - travis_retry composer update --prefer-dist --no-interaction --prefer-stable --no-suggest
 
 before_script:
   - phpenv config-rm xdebug.ini
 
 script:
-  - vendor/bin/phpunit
+  - laranix/vendor/bin/phpunit
