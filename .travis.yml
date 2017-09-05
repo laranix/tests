@@ -21,6 +21,7 @@ before_install:
 install:
   - cd $TRAVIS_BUILD_DIR/laranix
   - travis_retry composer update --prefer-dist --no-interaction --prefer-stable --no-suggest
+  - php artisan key:generate
 
 before_script:
   - phpenv config-rm xdebug.ini
