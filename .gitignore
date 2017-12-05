@@ -23,3 +23,6 @@ TODO.md
 *.css.map
 vars.css
 .php_cs.cache
+/public/themes/**/*.js
+/public/themes/**/*.css
+/public/themes/**/images/

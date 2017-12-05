@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Requests\Auth\PostRegister;
 use Laranix\Foundation\Controllers\Controller;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
@@ -20,29 +21,36 @@ class Register extends Controller implements UserCreator, UserGroupAdder
      * Show registration form
      *
      * @return \Illuminate\Contracts\View\View
+     * @throws \Laranix\Support\Exception\InvalidInstanceException
      */
-    public function getRegister() : View
+    public function getRegister(): View
     {
-        $this->prepareForFormResponse(new ScriptSettings([
+        $this->prepareForFormResponse(true, new ScriptSettings([
             'key'       => 'register-form',
             'filename'  => 'forms/register.js',
         ]));
 
-        return $this->view->make($this->config->get('laranixauth.users.views.register_form', 'auth.register.form'));
+        return $this->view->make(
+            $this->config->get('laranixauth.users.views.register_form', 'auth.register.form')
+        );
     }
 
     /**
      * Register a user
      *
-     * @param \Laranix\Auth\Email\Verification\Manager   $verificationManager
-     * @param \Laranix\Auth\Group\Repository       $group
-     * @param \Illuminate\Database\DatabaseManager $db
+     * @param \App\Http\Requests\Auth\PostRegister $postRegister
+     * @param \Laranix\Auth\Email\Verification\Manager             $verificationManager
+     * @param \Laranix\Auth\Group\Repository                       $group
+     * @param \Illuminate\Database\DatabaseManager                 $db
      * @return \Illuminate\Http\RedirectResponse
      * @throws \Exception
      */
-    public function postRegister(VerificationManager $verificationManager, GroupRepository $group, DatabaseManager $db) : RedirectResponse
-    {
-        $this->validateRegistration();
+    public function postRegister(
+        PostRegister $postRegister,
+        VerificationManager $verificationManager,
+        GroupRepository $group,
+        DatabaseManager $db
+    ): RedirectResponse {
 
         $db->connection()->beginTransaction();
 
@@ -84,25 +92,6 @@ class Register extends Controller implements UserCreator, UserGroupAdder
     }
 
     /**
-     * Validate registration request
-     */
-    protected function validateRegistration()
-    {
-        $usertable = $this->config->get('laranixauth.users.table', 'users');
-
-        // On email/username, make sure you update the column name here if it differs
-        $this->validate([
-            'first_name'    => 'required|max:64',
-            'last_name'     => 'required|max:64',
-            'email'         => 'required|email|confirmed|max:255|unique:' . $usertable,
-            'company'       => 'sometimes|max:64',
-            'username'      => 'required|min:3|max:64|alpha_dash|unique:' . $usertable,
-            'password'      => 'required|confirmed|min:6',
-            'terms'         => 'accepted',
-        ]);
-    }
-
-    /**
      * Show registration success
      *
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Contracts\View\View
@@ -120,11 +109,14 @@ class Register extends Controller implements UserCreator, UserGroupAdder
 
         // Any values are null then redirect
         if (in_array(null, $data, true)) {
-            return redirect($this->url->to('register'));
+            return redirect($this->url->to('/register'));
         }
 
         $session->keep('registered_username', 'registered_email', 'verify_token_expiry', 'token_valid_for');
 
-        return $this->view->make($this->config->get('laranixauth.users.views.register_success', 'auth.register.success'), $data);
+        return $this->view->make(
+            $this->config->get('laranixauth.users.views.register_success', 'auth.register.success'),
+            $data
+        );
     }
 }

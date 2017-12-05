@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers\Auth\Email\Verification;
 
+use App\Http\Requests\Auth\Email\Verification\PostVerify;
+use App\Http\Requests\Auth\Email\Verification\PostVerifyRefresh;
 use Laranix\Auth\Email\Verification\Events\RefreshAttempt;
 use Laranix\Auth\Email\Verification\Events\VerifyAttempt;
 use Laranix\Foundation\Controllers\Controller;
@@ -26,6 +28,7 @@ class Verification extends Controller
      *
      * @param \Laranix\Auth\Email\Verification\Manager $verificationManager
      * @return \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
+     * @throws \Laranix\Support\Exception\InvalidInstanceException
      */
     public function getVerify(VerificationManager $verificationManager)
     {
@@ -47,10 +50,11 @@ class Verification extends Controller
      * @param string|null $token
      * @param string|null $email
      * @return \Illuminate\Contracts\View\View
+     * @throws \Laranix\Support\Exception\InvalidInstanceException
      */
-    protected function getManualVerificationForm(string $token = null, string $email = null) : View
+    protected function getManualVerificationForm(string $token = null, string $email = null): View
     {
-        $this->prepareForFormResponse(new ScriptSettings([
+        $this->prepareForFormResponse(true, new ScriptSettings([
             'key'       => 'verify-email-form',
             'filename'  => 'forms/verifyemail.js',
         ]));
@@ -65,19 +69,15 @@ class Verification extends Controller
     /**
      * Verify a manually submitted verification form
      *
-     * @param \Laranix\Auth\Email\Verification\Manager $verificationManager
+     * @param \App\Http\Requests\Auth\Email\Verification\PostVerify $postVerify
+     * @param \Laranix\Auth\Email\Verification\Manager                              $verificationManager
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function postVerify(VerificationManager $verificationManager) : RedirectResponse
+    public function postVerify(PostVerify $postVerify, VerificationManager $verificationManager): RedirectResponse
     {
         $email = $this->getPostData('email');
 
         event(new VerifyAttempt($email));
-
-        $this->validate([
-            'token'     => 'required|regex:/^[A-Fa-f0-9]{64}$/',
-            'email'     => 'required|email|max:255',
-        ]);
 
         return $this->verify($verificationManager, $this->getPostData('token'), $email);
     }
@@ -87,7 +87,7 @@ class Verification extends Controller
      *
      * @return \Illuminate\Contracts\View\View
      */
-    public function getVerifyResult() : View
+    public function getVerifyResult(): View
     {
         $session    = $this->getSessionData();
         $header     = $session->get('verification_notice_header');
@@ -115,7 +115,7 @@ class Verification extends Controller
      * @param string                             $email
      * @return \Illuminate\Http\RedirectResponse
      */
-    protected function verify(VerificationManager $verificationManager, string $token, string $email) : RedirectResponse
+    protected function verify(VerificationManager $verificationManager, string $token, string $email): RedirectResponse
     {
         $verify = $verificationManager->processToken($token, $email);
 
@@ -133,36 +133,37 @@ class Verification extends Controller
      * Get the form to refresh a verification code
      *
      * @return \Illuminate\Contracts\View\View
+     * @throws \Laranix\Support\Exception\InvalidInstanceException
      */
-    public function getVerificationRefreshForm() : View
+    public function getVerificationRefreshForm(): View
     {
-        $this->prepareForFormResponse(new ScriptSettings([
+        $this->prepareForFormResponse(true, new ScriptSettings([
             'key'       => 'verify-email-refresh-form',
             'filename'  => 'forms/verifyemailrefresh.js',
         ]));
 
-        return $this->view->make($this->config->get('laranixauth.verification.views.verify_refresh', 'auth.verify.refresh'))
-                          ->with([
-                                'verify_refresh_message' => $this->getSessionData('verify_refresh_message'),
-                            ]);
+        return $this->view->make(
+            $this->config->get('laranixauth.verification.views.verify_refresh', 'auth.verify.refresh')
+        )->with([
+            'verify_refresh_message' => $this->getSessionData('verify_refresh_message'),
+        ]);
     }
 
     /**
      * Handle a refresh verification request form being posted
      *
-     * @param \Laranix\Auth\Email\Verification\Manager    $verificationManager
+     * @param \App\Http\Requests\Auth\Email\Verification\PostVerifyRefresh $postVerifyRefresh
+     * @param \Laranix\Auth\Email\Verification\Manager                                     $verificationManager
      * @return \Illuminate\Http\RedirectResponse
      * @throws \Laranix\Auth\Email\Verification\EmailVerificationException
      */
-    public function postVerificationRefreshForm(VerificationManager $verificationManager) : RedirectResponse
-    {
+    public function postVerificationRefreshForm(
+        PostVerifyRefresh $postVerifyRefresh,
+        VerificationManager $verificationManager
+    ): RedirectResponse {
         $email = $this->getPostData('email');
 
         event(new RefreshAttempt($email));
-
-        $this->validate([
-            'email'     => 'required|email|max:255',
-        ]);
 
         try {
             $token = $verificationManager->fetchTokenByEmail($email);
@@ -187,7 +188,7 @@ class Verification extends Controller
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    protected function redirectAfterValidVerification() : RedirectResponse
+    protected function redirectAfterValidVerification(): RedirectResponse
     {
         if ($this->request->user() === null) {
             $message = 'Your email has been verified, you may now <a href="' . $this->url->to('login') . '">login</a>';
@@ -210,7 +211,7 @@ class Verification extends Controller
      * @param int $verifyResult
      * @return \Illuminate\Http\RedirectResponse
      */
-    protected function redirectAfterInvalidVerification(int $verifyResult) : RedirectResponse
+    protected function redirectAfterInvalidVerification(int $verifyResult): RedirectResponse
     {
         if ($verifyResult === Token::TOKEN_EXPIRED) {
             $message = 'Your token has expired, please <a href="' . $this->url->to('email/verify/refresh') . '">request a new one</a>';

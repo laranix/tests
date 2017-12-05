@@ -19,7 +19,7 @@ return [
             ],
             [
                 'key'       => 'app-css',
-                'filename'  => 'app.min.css',
+                'filename'  => 'app.css',
                 'order'     => 2,
             ],
         ],
@@ -28,7 +28,7 @@ return [
         'form' => [
             [
                 'key'       => 'form-css',
-                'filename'  => 'form.min.css',
+                'filename'  => 'form.css',
                 'order'     => 3,
             ],
         ],
@@ -65,6 +65,21 @@ return [
                 'key'       => 'form-base-js',
                 'filename'  => 'forms/form.js',
                 'order'     => 4,
+            ],
+        ],
+
+        // Recaptcha script
+        'recaptcha' => [
+            [
+                'key'       => 'recaptcha',
+                'filename'  => 'api.js',
+                'url'       => [
+                    'scheme' => 'https',
+                    'domain' => 'www.google.com',
+                    'path'   => 'recaptcha',
+                ],
+                'order'     => 100,
+                'async'     => true,
             ],
         ],
     ],

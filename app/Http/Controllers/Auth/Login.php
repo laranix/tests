@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Requests\Auth\PostLogin;
 use Laranix\Auth\Events\Login\Restricted;
 use Laranix\Foundation\Controllers\Controller;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -25,10 +26,11 @@ class Login extends Controller
      * Get login form
      *
      * @return \Illuminate\Contracts\View\View
+     * @throws \Laranix\Support\Exception\InvalidInstanceException
      */
-    public function getLogin() : View
+    public function getLogin(): View
     {
-        $this->prepareForFormResponse(new ScriptSettings([
+        $this->prepareForFormResponse(true, new ScriptSettings([
             'key'       => 'login-form',
             'filename'  => 'forms/login.js',
         ]));
@@ -39,9 +41,10 @@ class Login extends Controller
     /**
      * Login to app
      *
+     * @param \App\Http\Requests\Auth\PostLogin $postLogin
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
      */
-    public function postLogin()
+    public function postLogin(PostLogin $postLogin)
     {
         return $this->login($this->request);
     }
@@ -50,6 +53,8 @@ class Login extends Controller
      * @param \Illuminate\Http\Request $request
      * @param mixed|User               $user
      * @return \Illuminate\Http\RedirectResponse
+     * @throws \Laranix\Support\Exception\NullValueException
+     * @throws \Laranix\Support\Exception\ArgumentOutOfRangeException
      */
     protected function authenticated(Request $request, $user) : RedirectResponse
     {
@@ -73,6 +78,7 @@ class Login extends Controller
     /**
      * @param \Illuminate\Contracts\Auth\Authenticatable|User $user
      * @return \Illuminate\Http\RedirectResponse
+     * @throws \Laranix\Support\Exception\ArgumentOutOfRangeException
      */
     protected function accountRestricted(Authenticatable $user) : RedirectResponse
     {
@@ -152,16 +158,13 @@ class Login extends Controller
 
 
     /**
-     * Validate the user login request.
+     * Override
      *
      * @param  \Illuminate\Http\Request  $request
      * @return void
      */
     protected function validateLogin(Request $request)
     {
-        $this->validate([
-            $this->username()   => 'required|email|max:255',
-            'password'          => 'required|min:6',
-        ]);
+        //
     }
 }

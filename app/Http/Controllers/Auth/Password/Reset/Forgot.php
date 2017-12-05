@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Auth\Password\Reset;
 
+use App\Http\Requests\Auth\Password\Reset\PostForgot;
 use Laranix\Auth\Password\Reset\Events\ForgotAttempt;
 use Laranix\Foundation\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -17,37 +18,39 @@ class Forgot extends Controller
      * Show forgot password form
      *
      * @return \Illuminate\Contracts\View\View
+     * @throws \Laranix\Support\Exception\InvalidInstanceException
      */
-    public function getPasswordForgotForm() : View
+    public function getPasswordForgotForm(): View
     {
-        $this->prepareForFormResponse(new ScriptSettings([
+        $this->prepareForFormResponse(true, new ScriptSettings([
             'key'       => 'pass-forgot-form',
             'filename'  => 'forms/passforgot.js',
         ]));
 
-        return $this->view->make($this->config->get('laranixauth.password.views.request_form', 'auth.password.forgot'))
-            ->with([
-                'forgot_password_message' => $this->getSessionData()->get('forgot_password_message')
-            ]);
+        return $this->view->make(
+            $this->config->get('laranixauth.password.views.request_form', 'auth.password.forgot')
+        )->with([
+            'forgot_password_message' => $this->getSessionData()->get('forgot_password_message')
+        ]);
     }
 
     /**
      * Send a reset link to email
      *
-     * @param \Laranix\Auth\Password\Reset\Manager    $resetManager
-     * @param \Laranix\Auth\User\Repository     $userRepository
+     * @param \App\Http\Requests\Auth\Password\Reset\PostForgot $postForgot
+     * @param \Laranix\Auth\Password\Reset\Manager                              $resetManager
+     * @param \Laranix\Auth\User\Repository                                     $userRepository
      * @return \Illuminate\Http\RedirectResponse
      * @throws \Laranix\Auth\Password\Reset\PasswordResetException
      */
-    public function postPasswordForgotForm(Manager $resetManager, UserRepository $userRepository) : RedirectResponse
-    {
+    public function postPasswordForgotForm(
+        PostForgot $postForgot,
+        Manager $resetManager,
+        UserRepository $userRepository
+    ): RedirectResponse {
         $email = $this->getPostData('email');
 
         event(new ForgotAttempt($email));
-
-        $this->validate([
-            'email' => 'required|email|max:255',
-        ]);
 
         try {
             $user = $userRepository->getByEmail($email);
@@ -61,7 +64,7 @@ class Forgot extends Controller
                 throw new PasswordResetException("Failed to begin password reset process: {$e->getMessage()}", 0, $e);
             }
 
-            // Log otherwise
+            // TODO Log otherwise
         }
 
         // TODO Localise

@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Auth\Password\Reset;
 
+use App\Http\Requests\Auth\Password\Reset\PostReset;
 use Laranix\Auth\Password\Reset\Events\VerifyAttempt;
 use Laranix\Foundation\Controllers\Controller;
 use Illuminate\Contracts\View\View;
@@ -20,10 +21,11 @@ class Reset extends Controller implements PasswordHasher
      * If no token supplied, redirect to the request form
      *
      * @return \Illuminate\Contracts\View\View
+     * @throws \Laranix\Support\Exception\InvalidInstanceException
      */
     public function getPasswordResetForm() : View
     {
-        $this->prepareForFormResponse(new ScriptSettings([
+        $this->prepareForFormResponse(true, new ScriptSettings([
             'key'       => 'pass-reset-form',
             'filename'  => 'forms/passreset.js',
         ]));
@@ -38,20 +40,15 @@ class Reset extends Controller implements PasswordHasher
     /**
      * Reset a users password
      *
-     * @param \Laranix\Auth\Password\Reset\Manager $resetManager
+     * @param \App\Http\Requests\Auth\Password\Reset\PostReset $postReset
+     * @param \Laranix\Auth\Password\Reset\Manager                             $resetManager
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function postPasswordResetForm(PasswordResetManager $resetManager) : RedirectResponse
+    public function postPasswordResetForm(PostReset $postReset, PasswordResetManager $resetManager): RedirectResponse
     {
         $email = $this->getPostData('email');
 
         event(new VerifyAttempt($email));
-
-        $this->validate([
-            'token'     => 'required|regex:/^[A-Fa-f0-9]{64}$/',
-            'email'     => 'required|email|max:255',
-            'password'  => 'required|confirmed|min:6'
-        ]);
 
         return $this->reset($resetManager, $this->getPostData('token'), $email, $this->getPostData('password'));
     }
@@ -65,8 +62,12 @@ class Reset extends Controller implements PasswordHasher
      * @param string                               $newPassword
      * @return \Illuminate\Http\RedirectResponse
      */
-    protected function reset(PasswordResetManager $resetManager, string $token, string $email, string $newPassword) : RedirectResponse
-    {
+    protected function reset(
+        PasswordResetManager $resetManager,
+        string $token,
+        string $email,
+        string $newPassword
+    ): RedirectResponse {
         $verify = $resetManager->processToken($token, $email, $newPassword);
 
         switch ($verify) {

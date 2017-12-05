@@ -18,7 +18,7 @@ Route::namespace('Auth')->prefix('register')->middleware('guest')->group(functio
 
     Route::post('/', 'Register@postRegister')
          ->name('register.post')
-         ->middleware('antispam');
+         ->middleware('throttle:10,10', 'antispam');
 
     Route::get('success', 'Register@getRegisterSuccess')
          ->name('register.success');
@@ -33,7 +33,7 @@ Route::namespace('Auth')->group(function () {
 
     Route::post('login', 'Login@postLogin')
          ->name('login.post')
-         ->middleware('guest', 'antispam');
+         ->middleware('throttle:10,10', 'guest', 'antispam');
 
     Route::post('logout', 'Login@postLogout')
          ->name('logout')
@@ -49,7 +49,7 @@ Route::namespace('Auth\\Password\\Reset')->prefix('password')->middleware('guest
 
     Route::post('forgot', 'Forgot@postPasswordForgotForm')
          ->name('password.forgot.post')
-         ->middleware('antispam');
+         ->middleware('throttle:10,10', 'antispam');
 
     // Reset
     Route::get('reset', 'Reset@getPasswordResetForm')
@@ -57,7 +57,7 @@ Route::namespace('Auth\\Password\\Reset')->prefix('password')->middleware('guest
 
     Route::post('reset', 'Reset@postPasswordResetForm')
          ->name('password.reset.post')
-         ->middleware('antispam');
+         ->middleware('throttle:100,1', 'antispam');
 
     Route::get('reset/error', 'Reset@getPasswordResetError')
          ->name('password.reset.error');
@@ -68,18 +68,18 @@ Route::namespace('Auth\\Email\\Verification')->prefix('email')->group(function (
 
     Route::get('verify', 'Verification@getVerify')
          ->name('email.verify')
-         ->middleware();
+         ->middleware('throttle:100,1');
 
     Route::post('verify', 'Verification@postVerify')
          ->name('email.verify.post')
-         ->middleware('antispam');
+         ->middleware('throttle:100,1', 'antispam');
 
     Route::get('verify/refresh', 'Verification@getVerificationRefreshForm')
          ->name('email.verify.refresh');
 
     Route::post('verify/refresh', 'Verification@postVerificationRefreshForm')
          ->name('email.verify.refresh.post')
-         ->middleware('antispam');
+         ->middleware('throttle:100,1', 'antispam');
 
     Route::get('verify/result', 'Verification@getVerifyResult')
          ->name('email.verify.result');
