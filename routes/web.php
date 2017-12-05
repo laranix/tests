@@ -18,7 +18,7 @@ Route::namespace('Auth')->prefix('register')->middleware('guest')->group(functio
 
     Route::post('/', 'Register@postRegister')
          ->name('register.post')
-         ->middleware('throttle:10,10', 'antispam');
+         ->middleware('throttle:100,1', 'antispam');
 
     Route::get('success', 'Register@getRegisterSuccess')
          ->name('register.success');
@@ -33,7 +33,7 @@ Route::namespace('Auth')->group(function () {
 
     Route::post('login', 'Login@postLogin')
          ->name('login.post')
-         ->middleware('throttle:10,10', 'guest', 'antispam');
+         ->middleware('throttle:100,1', 'guest', 'antispam');
 
     Route::post('logout', 'Login@postLogout')
          ->name('logout')
@@ -49,7 +49,7 @@ Route::namespace('Auth\\Password\\Reset')->prefix('password')->middleware('guest
 
     Route::post('forgot', 'Forgot@postPasswordForgotForm')
          ->name('password.forgot.post')
-         ->middleware('throttle:10,10', 'antispam');
+         ->middleware('throttle:100,1', 'antispam');
 
     // Reset
     Route::get('reset', 'Reset@getPasswordResetForm')
