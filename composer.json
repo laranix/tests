@@ -8,11 +8,12 @@
     "require": {
         "php": ">=7.1",
         "andreasindal/laravel-markdown": "~2.0",
+        "facebook/webdriver": "^1.5",
         "fideloper/proxy": "~3.3",
         "guzzlehttp/guzzle": "^6.0",
         "laravel/framework": "5.5.*",
         "laravel/tinker": "~1.0",
-        "samanix/laranix": "~2.0@dev"
+        "samanix/laranix": "~3.0@dev"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "~3.0",
