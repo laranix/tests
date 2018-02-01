@@ -10,8 +10,8 @@
         <meta name="robots" content="@yield('meta:robots', 'index,follow')">
         <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-        <meta property="fb:admins" content="{{ $config->get('pn.details.fbadmins') }}" />
-        <meta property="fb:app_id" content="{{ $config->get('pn.details.fbappid') }}" />
+        <meta property="fb:admins" content="{{ $config->get('appsettings.fbadmins') }}" />
+        <meta property="fb:app_id" content="{{ $config->get('appsettings.fbappid') }}" />
 
         <meta property="og:title" content="@yield('pagetitle', $config->get('app.name')) - {{ $config->get('app.name') }}" />
         <meta property="og:type" content="@yield('meta:og:type', 'website')" />
@@ -22,6 +22,8 @@
         <meta property="og:locale" content="en_GB" />
 
         @stack('meta:extra')
+
+        @yield('meta:tags', '')
 
         <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32" />
         <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16" />

@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'users' => [
-        'table'             => 'users',
+    'user' => [
+        'table'             => 'user',
 
         'views'             => [
             'register_form'     => 'auth.register.form',
@@ -10,8 +10,8 @@ return [
         ],
     ],
 
-    'groups' => [
-        'table'         => 'groups',
+    'group' => [
+        'table'         => 'group',
         'default_group' => 'User', // Make sure it exists in groups table
 
         // If true, will use the json column type for the group flags
@@ -19,8 +19,8 @@ return [
         'use_json_column'   => false,
     ],
 
-    'usergroups' => [
-        'table' => 'usergroups',
+    'usergroup' => [
+        'table' => 'usergroup',
     ],
 
     'cage' => [
@@ -41,8 +41,8 @@ return [
 
     'verification'  => [
         'table'     => 'email_verification',
-        'route'     => 'email.verify',    // Route name to verify token
-        'expiry'    => 60,          // Time in minutes before token expires
+        'route'     => 'email.verify.show', // Route name to verify token
+        'expiry'    => 60,                  // Time in minutes before token expires
 
         'mail'      => [
             'view'      => 'mail.auth.verification',
@@ -59,8 +59,8 @@ return [
     'password'  => [
         'cost'      => 12,
         'table'     => 'password_reset',
-        'route'     => 'password.reset',    // Route name to verify token
-        'expiry'    => 60,                  // Time in minutes before token expires
+        'route'     => 'password.reset.show',   // Route name to verify token
+        'expiry'    => 60,                      // Time in minutes before token expires
 
         'mail'      => [
             'view'      => 'mail.auth.reset',

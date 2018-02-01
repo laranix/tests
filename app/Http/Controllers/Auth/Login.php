@@ -27,8 +27,9 @@ class Login extends Controller
      *
      * @return \Illuminate\Contracts\View\View
      * @throws \Laranix\Support\Exception\InvalidInstanceException
+     * @throws \Laranix\Support\Exception\InvalidTypeException
      */
-    public function getLogin(): View
+    public function show(): View
     {
         $this->prepareForFormResponse(true, new ScriptSettings([
             'key'       => 'login-form',
@@ -41,12 +42,12 @@ class Login extends Controller
     /**
      * Login to app
      *
-     * @param \App\Http\Requests\Auth\PostLogin $postLogin
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
+     * @param \App\Http\Requests\Auth\PostLogin $request
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
      */
-    public function postLogin(PostLogin $postLogin)
+    public function doLogin(PostLogin $request)
     {
-        return $this->login($this->request);
+        return $this->login($request);
     }
 
     /**
@@ -56,10 +57,10 @@ class Login extends Controller
      * @throws \Laranix\Support\Exception\NullValueException
      * @throws \Laranix\Support\Exception\ArgumentOutOfRangeException
      */
-    protected function authenticated(Request $request, $user) : RedirectResponse
+    protected function authenticated(Request $request, $user): RedirectResponse
     {
         if ($user->account_status !== User::USER_ACTIVE) {
-            return $this->accountRestricted($user);
+            return $this->accountRestricted($request, $user);
         }
 
         $user->updateLastLogin()->save();
@@ -76,13 +77,14 @@ class Login extends Controller
     }
 
     /**
+     * @param \Illuminate\Http\Request                        $request
      * @param \Illuminate\Contracts\Auth\Authenticatable|User $user
      * @return \Illuminate\Http\RedirectResponse
      * @throws \Laranix\Support\Exception\ArgumentOutOfRangeException
      */
-    protected function accountRestricted(Authenticatable $user) : RedirectResponse
+    protected function accountRestricted(Request $request, Authenticatable $user): RedirectResponse
     {
-        $this->logoutUser(false);
+        $this->logoutUser($request,false);
 
         $message = $this->getAccountRestrictedMessage($user->account_status);
 
@@ -102,7 +104,7 @@ class Login extends Controller
      * @return string
      * @throws \Laranix\Support\Exception\ArgumentOutOfRangeException
      */
-    protected function getAccountRestrictedMessage(int $accountStatus) : string
+    protected function getAccountRestrictedMessage(int $accountStatus): string
     {
         switch ($accountStatus) {
             case User::USER_UNVERIFIED:
@@ -119,28 +121,29 @@ class Login extends Controller
     /**
      * Logout of app
      *
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function postLogout() : RedirectResponse
+    public function doLogout(Request $request): RedirectResponse
     {
-        return $this->logoutUser();
+        return $this->logoutUser($request);
     }
 
     /**
      * Logout user
      *
+     * @param \Illuminate\Http\Request $request
      * @param bool                     $redirect
      * @return \Illuminate\Http\RedirectResponse|null
      */
-    protected function logoutUser(bool $redirect = true) : ?RedirectResponse
+    protected function logoutUser(Request $request, bool $redirect = true): ?RedirectResponse
     {
         $guard      = $this->guard();
         /** @var User $user */
         $user       = $guard->user();
-        $session    = $this->getSessionData();
 
         $guard->logout();
-        $session->invalidate();
+        $request->session()->invalidate();
 
         if (!$redirect) {
             return null;

@@ -2,12 +2,13 @@
 namespace App\Http\Controllers\Auth\Password\Reset;
 
 use App\Http\Requests\Auth\Password\Reset\PostReset;
+use Illuminate\Http\Request;
 use Laranix\Auth\Password\Reset\Events\VerifyAttempt;
 use Laranix\Foundation\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Laranix\Auth\Password\{Hasher as PasswordHasher, HashesPasswords};
-use Laranix\Auth\Password\Reset\Manager as PasswordResetManager;
+use Laranix\Auth\Password\Reset\Manager;
 use Laranix\Auth\User\Token\Token;
 use Laranix\Themer\Scripts\Settings as ScriptSettings;
 
@@ -20,37 +21,42 @@ class Reset extends Controller implements PasswordHasher
      *
      * If no token supplied, redirect to the request form
      *
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Contracts\View\View
      * @throws \Laranix\Support\Exception\InvalidInstanceException
+     * @throws \Laranix\Support\Exception\InvalidTypeException
      */
-    public function getPasswordResetForm() : View
+    public function show(Request $request): View
     {
         $this->prepareForFormResponse(true, new ScriptSettings([
             'key'       => 'pass-reset-form',
             'filename'  => 'forms/passreset.js',
         ]));
 
-        return $this->view->make($this->config->get('laranixauth.password.views.reset_form', 'auth.password.reset'))
-            ->with([
-                'token' => old('token', $this->getQueryData('token')),
-                'email' => old('email', $this->getQueryData('email')),
-            ]);
+        return $this->view->make(
+            $this->config->get('laranixauth.password.views.reset_form', 'auth.password.reset')
+        )->with([
+            'token' => old('token', $request->query('token')),
+            'email' => old('email', $request->query('email')),
+        ]);
     }
 
     /**
      * Reset a users password
      *
-     * @param \App\Http\Requests\Auth\Password\Reset\PostReset $postReset
+     * @param \App\Http\Requests\Auth\Password\Reset\PostReset $request
      * @param \Laranix\Auth\Password\Reset\Manager                             $resetManager
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function postPasswordResetForm(PostReset $postReset, PasswordResetManager $resetManager): RedirectResponse
+    public function update(PostReset $request, Manager $resetManager): RedirectResponse
     {
-        $email = $this->getPostData('email');
+        $email = $request->post('email');
 
         event(new VerifyAttempt($email));
 
-        return $this->reset($resetManager, $this->getPostData('token'), $email, $this->getPostData('password'));
+        return $this->reset(
+            $resetManager, $request->post('token'), $email, $request->post('password')
+        );
     }
 
     /**
@@ -59,16 +65,12 @@ class Reset extends Controller implements PasswordHasher
      * @param \Laranix\Auth\Password\Reset\Manager $resetManager
      * @param string                               $token
      * @param string                               $email
-     * @param string                               $newPassword
+     * @param string                               $newPass
      * @return \Illuminate\Http\RedirectResponse
      */
-    protected function reset(
-        PasswordResetManager $resetManager,
-        string $token,
-        string $email,
-        string $newPassword
-    ): RedirectResponse {
-        $verify = $resetManager->processToken($token, $email, $newPassword);
+    protected function reset(Manager $resetManager, string $token, string $email, string $newPass): RedirectResponse
+    {
+        $verify = $resetManager->processToken($token, $email, $newPass);
 
         switch ($verify) {
             case Token::TOKEN_VALID:
@@ -83,11 +85,12 @@ class Reset extends Controller implements PasswordHasher
     /**
      * Show error message on failed reset
      *
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Contracts\View\View
      */
-    public function getPasswordResetError() : View
+    public function error(Request $request): View
     {
-        $session = $this->getSessionData();
+        $session = $request->session();
         $message = $session->get('password_reset_error_message');
 
         if ($message === null) {
@@ -109,7 +112,7 @@ class Reset extends Controller implements PasswordHasher
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    protected function redirectAfterValidReset() : RedirectResponse
+    protected function redirectAfterValidReset(): RedirectResponse
     {
         // TODO Localise
         return redirect($this->url->to('login'))
@@ -127,7 +130,7 @@ class Reset extends Controller implements PasswordHasher
      * @param int $resetResult
      * @return \Illuminate\Http\RedirectResponse
      */
-    protected function redirectAfterInvalidReset(int $resetResult) : RedirectResponse
+    protected function redirectAfterInvalidReset(int $resetResult): RedirectResponse
     {
         // TODO Localise
         if ($resetResult === Token::TOKEN_EXPIRED) {
